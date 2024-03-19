@@ -15,7 +15,8 @@ find_package(OpenSSL REQUIRED)
 # Set global flags.
 set(CMAKE_CXX_STANDARD 20)
 
-set(HIVECOM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/HiveCom)
+# Set the HiveCom include dir.
+set(HIVECOM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/HiveCom/Include)
 
 # Add the subdirectories.
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Source)
@@ -31,3 +32,6 @@ file(
     "-I${SPDLOG_INCLUDE_DIR}\n"
     "-I${MAIN_INCLUDE_DIR}\n"
 )
+
+# Set the desktop app as the start-up project.
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Desktop)

@@ -8,7 +8,14 @@ set(
 	SOURCES
 
 	"Main.cpp"
+	"CertificateProvider.cpp"
+	"CertificateProvider.hpp"
+	"DesktopDataLink.cpp"
+	"DesktopDataLink.hpp"
 )
+
+# Add the source group.
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 
 # Enable testing.
 enable_testing()

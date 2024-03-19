@@ -20,8 +20,9 @@ public:
 	static CertificateProvider& Instance();
 
 	/// @brief Create a new certificate and the key-pair.
+	///	@param identifier The certificate identifier.
 	///	@return The certificate and key-pair.
-	[[nodiscard]] std::pair<HiveCom::Certificate, HiveCom::Kyber768Key> createCertificate();
+	[[nodiscard]] std::pair<HiveCom::Certificate, HiveCom::Kyber768Key> createCertificate(const std::string& identifier);
 
 private:
 	HiveCom::Dilithium3 m_tool;

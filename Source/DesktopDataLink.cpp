@@ -1,7 +1,7 @@
 #include "DesktopDataLink.hpp"
 
-DesktopDataLink::DesktopDataLink(const HiveCom::Certificate& certificate, const HiveCom::Kyber768Key& keyPair)
-	: HiveCom::DataLink("Desktop-App", certificate, keyPair)
+DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::Certificate& certificate, const HiveCom::Kyber768Key& keyPair)
+	: HiveCom::DataLink(identifier, certificate, keyPair)
 {
 }
 

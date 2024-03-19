@@ -1,0 +1,4 @@
+[submodule "HiveCom"]
+	path = HiveCom
+	url = https://github.com/DhirajWishal/HiveCom
+	branch = dev

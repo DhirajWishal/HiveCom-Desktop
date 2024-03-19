@@ -9,7 +9,7 @@ void DesktopDataLink::sendDiscovery()
 {
 }
 
-void DesktopDataLink::send(std::string_view receiver, HiveCom::Bytes message)
+void DesktopDataLink::send(std::string_view receiver, const HiveCom::Bytes& message)
 {
 }
 

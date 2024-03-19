@@ -1,10 +1,13 @@
 #include "CertificateProvider.hpp"
 
 #include <HiveCom/Kyber768.hpp>
+#include <HiveCom/CertificateAuthority.hpp>
 
 CertificateProvider::CertificateProvider()
-	: m_rootKey(m_tool.generateKey())
 {
+	m_rootKey = HiveCom::CertificateAuthority::Instance().createKeyPair();
+	m_trustChain.addTrustedPublicKey(HiveCom::ToFixedBytes<HiveCom::Dilithium3Key::PublicKeySize>(m_rootKey.getPublicKey()));
+	HiveCom::CertificateAuthority::Instance().setTrustChain(m_trustChain);
 }
 
 CertificateProvider& CertificateProvider::Instance()
@@ -13,11 +16,11 @@ CertificateProvider& CertificateProvider::Instance()
 	return instance;
 }
 
-std::pair<HiveCom::Certificate, HiveCom::Kyber768Key> CertificateProvider::createCertificate(const std::string& identifier)
+std::pair<HiveCom::Certificate, HiveCom::Kyber768Key> CertificateProvider::createCertificate(const std::string& identifier) const
 {
 	const HiveCom::Kyber768 tool;
 	const auto keyPair = tool.generateKey();
-	const auto certificate = HiveCom::Certificate(identifier, 0, "0001", 30, "Desktop App", keyPair.getPublicKey(), m_rootKey.getPrivateKey(), m_tool);
+	const auto certificate = HiveCom::CertificateAuthority::Instance().createCertificate(identifier, keyPair.getPublicKey(), m_rootKey.getPrivateKey());
 
 	return std::make_pair(certificate, keyPair);
 }

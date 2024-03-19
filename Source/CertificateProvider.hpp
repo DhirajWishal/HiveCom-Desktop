@@ -2,7 +2,7 @@
 
 #include <HiveCom/Kyber768Key.hpp>
 #include <HiveCom/Certificate.hpp>
-#include <HiveCom/Dilithium3.hpp>
+#include <HiveCom/TrustChain.hpp>
 
 /// @brief Certificate provider class.
 ///	This will generate a new certificate when needed along with it's public and private key pair.
@@ -22,9 +22,9 @@ public:
 	/// @brief Create a new certificate and the key-pair.
 	///	@param identifier The certificate identifier.
 	///	@return The certificate and key-pair.
-	[[nodiscard]] std::pair<HiveCom::Certificate, HiveCom::Kyber768Key> createCertificate(const std::string& identifier);
+	[[nodiscard]] std::pair<HiveCom::Certificate, HiveCom::Kyber768Key> createCertificate(const std::string& identifier) const;
 
 private:
-	HiveCom::Dilithium3 m_tool;
 	HiveCom::Dilithium3Key m_rootKey;
+	HiveCom::TrustChain m_trustChain;
 };

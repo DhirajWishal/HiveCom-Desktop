@@ -22,7 +22,7 @@ protected:
 	/// @brief Send a message through the networking protocol.
 	///	@param receiver The receiver identifier.
 	///	@param message The message to send.
-	void send(std::string_view receiver, HiveCom::Bytes message) override;
+	void send(std::string_view receiver, const HiveCom::Bytes& message) override;
 
 	/// @brief Route a message through the network using a routing protocol/ algorithm.
 	///	@param receiver The receiver node.

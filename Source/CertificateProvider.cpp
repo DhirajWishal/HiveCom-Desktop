@@ -6,8 +6,7 @@
 CertificateProvider::CertificateProvider()
 {
 	m_rootKey = HiveCom::CertificateAuthority::Instance().createKeyPair();
-	m_trustChain.addTrustedPublicKey(HiveCom::ToFixedBytes<HiveCom::Dilithium3Key::PublicKeySize>(m_rootKey.getPublicKey()));
-	HiveCom::CertificateAuthority::Instance().setTrustChain(m_trustChain);
+	HiveCom::CertificateAuthority::Instance().addTrustedPublicKey(HiveCom::ToFixedBytes<HiveCom::Dilithium3Key::PublicKeySize>(m_rootKey.getPublicKey()));
 }
 
 CertificateProvider& CertificateProvider::Instance()

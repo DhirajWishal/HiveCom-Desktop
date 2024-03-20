@@ -2,7 +2,6 @@
 
 #include <HiveCom/Kyber768Key.hpp>
 #include <HiveCom/Certificate.hpp>
-#include <HiveCom/TrustChain.hpp>
 
 /// @brief Certificate provider class.
 ///	This will generate a new certificate when needed along with it's public and private key pair.
@@ -26,5 +25,4 @@ public:
 
 private:
 	HiveCom::Dilithium3Key m_rootKey;
-	HiveCom::TrustChain m_trustChain;
 };

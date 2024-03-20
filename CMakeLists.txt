@@ -10,12 +10,20 @@ project(
 	DESCRIPTION "Desktop application demonstration of HiveCom"
 )
 
-find_package(OpenSSL REQUIRED)
-
 # Set global flags.
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
-# Set the HiveCom include dir.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find the required packages.
+find_package(OpenSSL REQUIRED)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+
+# Set the HiveCom include directory.
 set(HIVECOM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/HiveCom/Include)
 
 # Add the subdirectories.

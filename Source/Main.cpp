@@ -1,10 +1,11 @@
-#include "DesktopDataLink.hpp"
-#include "CertificateProvider.hpp"
+#include "MainWindow.hpp"
 
-#include <HiveCom/NetworkManager.hpp>
+#include <QApplication>
 
-int main()
+int main(int argc, char *argv[])
 {
-	const auto [certificate, keyPair] = CertificateProvider::Instance().createCertificate("Desktop-A");
-	auto manager = HiveCom::NetworkManager(std::make_unique<DesktopDataLink>("Desktop-A", certificate, keyPair));
+    QApplication a(argc, argv);
+    MainWindow w;
+    w.show();
+    return a.exec();
 }

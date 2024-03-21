@@ -1,9 +1,16 @@
 #pragma once
+
 #include <HiveCom/DataLink.hpp>
 
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QUdpSocket>
+
 /// @brief Desktop data link class.
-class DesktopDataLink final : public HiveCom::DataLink  // NOLINT(cppcoreguidelines-special-member-functions)
+class DesktopDataLink final : public QObject, public HiveCom::DataLink  // NOLINT(cppcoreguidelines-special-member-functions)
 {
+	Q_OBJECT
+
 public:
 	/// @brief Explicit constructor.
 	///	@param identifier The current node's identifier.
@@ -28,4 +35,31 @@ protected:
 	///	@param receiver The receiver node.
 	/// @param message The message to send.
 	void route(std::string_view receiver, const HiveCom::Bytes& message) override;
+
+private slots:
+	/// @brief This slot is called when the TCP socket is connected.
+	void onTcpConnected();
+
+	/// @brief This slot is called when the TCP socket is disconnected.
+	void onTcpDisconnected();
+
+	/// @brief This slot is called when the TCP socket is ready to read.
+	void onTcpReadyRead();
+
+	/// @brief This slot is called when the UDP socket is connected.
+	void onUdpConnected();
+
+	/// @brief This slot is called when the UDP socket is disconnected.
+	void onUdpDisconnected();
+
+	/// @brief This slot is called when the UDP socket is ready to read.
+	void onUdpReadyRead();
+
+	/// @brief This slot is called when a new connection is available for the TCP server.
+	void onNewConnectionAvailable();
+
+private:
+	std::unique_ptr<QTcpServer> m_pTcpServer;
+	std::unique_ptr<QTcpSocket> m_pTcpSocket;
+	std::unique_ptr<QUdpSocket> m_pUdpSocket;
 };

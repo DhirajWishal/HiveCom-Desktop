@@ -1,6 +1,6 @@
 # Set the project name.
 project(
-	Desktop
+	HiveCom-Desktop
     VERSION 0.1
 )
 
@@ -23,30 +23,30 @@ set(
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(Desktop
+    qt_add_executable(${CMAKE_PROJECT_NAME}
         MANUAL_FINALIZATION
         ${SOURCES}
     )
 # Define target properties for Android with Qt 6 as:
-#    set_property(TARGET Desktop APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#    set_property(TARGET ${CMAKE_PROJECT_NAME} APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
 # For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
 else()
     if(ANDROID)
-        add_library(Desktop SHARED
+        add_library(${CMAKE_PROJECT_NAME} SHARED
             ${SOURCES}
         )
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_executable(Desktop
+        add_executable(${CMAKE_PROJECT_NAME}
             ${SOURCES}
         )
     endif()
 endif()
 
 target_link_libraries(
-    Desktop 
+    ${CMAKE_PROJECT_NAME} 
     PRIVATE 
     
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -54,7 +54,7 @@ target_link_libraries(
     HiveCom
 )
 
-set_target_properties(Desktop PROPERTIES
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -62,17 +62,17 @@ set_target_properties(Desktop PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-install(TARGETS Desktop
+install(TARGETS ${CMAKE_PROJECT_NAME}
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(Desktop)
+    qt_finalize_executable(${CMAKE_PROJECT_NAME})
 endif()
 
 # Setup the include directories.
 target_include_directories(
-    Desktop
+    ${CMAKE_PROJECT_NAME}
 
     PRIVATE "${HIVECOM_INCLUDE_DIR}"
 )
@@ -80,10 +80,10 @@ target_include_directories(
 # Run the deploy script.
 if(WIN32)
     add_custom_command(
-        TARGET Desktop 
+        TARGET ${CMAKE_PROJECT_NAME} 
         POST_BUILD
 
-        COMMAND ${QT_DIR}/../../../bin/windeployqt.exe $<TARGET_FILE:Desktop>
+        COMMAND ${QT_DIR}/../../../bin/windeployqt.exe $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
         COMMENT "Run the deployment script for the output file."
     )
 endif()

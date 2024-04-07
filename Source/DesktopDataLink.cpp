@@ -3,16 +3,16 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QDebug>
 
-constexpr quint16 BroadcastPort = 6509;
+constexpr quint16 BroadcastPort = 1234;
 
 DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::Certificate& certificate, const HiveCom::Kyber768Key& keyPair)
 	: HiveCom::DataLink(identifier, certificate, keyPair)
 	, m_pTcpServer(std::make_unique<QTcpServer>())
-	, m_pTcpSocket(std::make_unique<QTcpSocket>())
+	// , m_pTcpSocket(std::make_unique<QTcpSocket>())
 	, m_pUdpSocket(std::make_unique<QUdpSocket>())
 {
 	connect(m_pUdpSocket.get(), &QUdpSocket::readyRead, this, &DesktopDataLink::onUdpReadyRead);
-	if (m_pUdpSocket->bind(QHostAddress::Broadcast))
+	if (m_pUdpSocket->bind(QHostAddress::Broadcast, BroadcastPort))
 	{
 		qDebug() << "UDP socket is up!";
 	}
@@ -22,8 +22,9 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 	}
 
 	connect(m_pTcpServer.get(), &QTcpServer::newConnection, this, &DesktopDataLink::onNewConnectionAvailable);
+	connect(m_pTcpServer.get(), &QTcpServer::newConnection, this, &DesktopDataLink::onNewConnectionAvailable);
 
-	if (m_pTcpServer->listen(QHostAddress::LocalHost))
+	if (m_pTcpServer->listen(QHostAddress::LocalHost, BroadcastPort))
 	{
 		const auto port = m_pTcpServer->serverPort();
 		const auto addr = m_pTcpServer->serverAddress().toString();
@@ -33,20 +34,17 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 
 void DesktopDataLink::sendDiscovery()
 {
-	std::unique_ptr<QUdpSocket> socket = std::make_unique<QUdpSocket>(this);
-
-	QTimer::singleShot(1000, [this, socket = std::move(socket)]
+	QUdpSocket* pSocket = new QUdpSocket(this);
+	connect(pSocket, &QUdpSocket::connected, this, [this, pSocket]
 		{
 			const auto message = ("HiveCom-Desktop; " + QString(m_identifier.c_str())).toUtf8();
+			if (pSocket->writeDatagram(message, QHostAddress::Broadcast, BroadcastPort) < 0)
+				qDebug() << "Failed to write the data!";
 
-			for (quint16 i = 0; i < UINT16_MAX; i++)
-			{
-				if (socket->writeDatagram(message, QHostAddress::Broadcast, i) > 0)
-					return;
-			}
-
-			qDebug() << "No open ports found!";
+			pSocket->deleteLater();
 		});
+
+	pSocket->connectToHost(QHostAddress::Broadcast, BroadcastPort);
 }
 
 void DesktopDataLink::send(std::string_view receiver, const HiveCom::Bytes& message)

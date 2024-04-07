@@ -42,4 +42,4 @@ file(
 )
 
 # Set the desktop app as the start-up project.
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Desktop)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT HiveCom-Desktop)

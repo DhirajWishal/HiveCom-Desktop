@@ -36,6 +36,15 @@ MainWindow::MainWindow(QWidget* parent)
 	// Set up the manager.
 	m_pNetworkManager = std::make_unique<HiveCom::NetworkManager>(std::make_unique<DesktopDataLink>(m_username.toStdString(), certificate, kemKey));
 
+	// Set up the required connections.
+	const auto pDataLink = m_pNetworkManager->getDataLink();
+	connect(dynamic_cast<DesktopDataLink*>(pDataLink), &DesktopDataLink::pingReceived, this, [this](DesktopDataLink::ClientType type, const QString& identifier)
+		{
+			if (m_ui->onlineList->findItems(identifier, Qt::MatchCaseSensitive).isEmpty())
+				m_ui->onlineList->addItem(identifier);
+		});
+
+	// Setup UI connections.
 	connect(m_ui->startButton, &QPushButton::clicked, this, [this]
 		{
 			m_pNetworkManager->pingPeers();

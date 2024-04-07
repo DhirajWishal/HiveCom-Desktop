@@ -12,6 +12,18 @@ class DesktopDataLink final : public QObject, public HiveCom::DataLink  // NOLIN
 	Q_OBJECT
 
 public:
+	/// @brief Client type enum.
+	///	This defines all the possible client types that we support.
+	enum class ClientType : quint8
+	{
+		Desktop,	// Client type string: HiveCom-Desktop
+		Mobile,		// Client type string: HiveCom-Mobile
+		Embedded	// Client type string: HiveCom-IoT
+	};
+
+	Q_ENUM(ClientType);
+
+public:
 	/// @brief Explicit constructor.
 	///	@param identifier The current node's identifier.
 	///	@param certificate The certificate of the current node.
@@ -24,6 +36,13 @@ public:
 	/// @brief Send discovery message function.
 	///	This function will broadcast the certificate to all the immediate peers.
 	void sendDiscovery() override;
+
+signals:
+	/// @brief Ping received signal.
+	///	This signal is emitted when a new ping is received from someone.
+	///	@param type The client type.
+	///	@param identifier The client's identifier.
+	void pingReceived(ClientType type, QString identifier);
 
 protected:
 	/// @brief Send a message through the networking protocol.
@@ -38,13 +57,16 @@ protected:
 
 private slots:
 	/// @brief This slot is called when the TCP socket is connected.
-	void onTcpConnected();
+	///	@param identifier The socket identifier.
+	void onTcpConnected(QString identifier);
 
 	/// @brief This slot is called when the TCP socket is disconnected.
-	void onTcpDisconnected();
+	///	@param identifier The socket identifier.
+	void onTcpDisconnected(QString identifier);
 
 	/// @brief This slot is called when the TCP socket is ready to read.
-	void onTcpReadyRead();
+	///	@param identifier The socket identifier.
+	void onTcpReadyRead(QString identifier);
 
 	/// @brief This slot is called when the UDP socket is connected.
 	void onUdpConnected();
@@ -59,7 +81,8 @@ private slots:
 	void onNewConnectionAvailable();
 
 private:
+	QMap<QString, QTcpSocket*> m_pTcpSockets;
+
 	std::unique_ptr<QTcpServer> m_pTcpServer;
-	std::unique_ptr<QTcpSocket> m_pTcpSocket;
 	std::unique_ptr<QUdpSocket> m_pUdpSocket;
 };

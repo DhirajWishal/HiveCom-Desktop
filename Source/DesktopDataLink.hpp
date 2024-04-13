@@ -2,8 +2,8 @@
 
 #include <HiveCom/DataLink.hpp>
 
+#include <QNetworkAccessManager>
 #include <QTcpServer>
-#include <QTcpSocket>
 #include <QUdpSocket>
 
 /// @brief Desktop data link class.
@@ -68,6 +68,9 @@ private slots:
 	///	@param identifier The socket identifier.
 	void onTcpReadyRead(QString identifier);
 
+	/// @brief This slot is called when the peer TCP socket is ready to read.
+	void onTcpPeerReadyRead();
+
 	/// @brief This slot is called when the UDP socket is connected.
 	void onUdpConnected();
 
@@ -81,8 +84,20 @@ private slots:
 	void onNewConnectionAvailable();
 
 private:
-	QMap<QString, QTcpSocket*> m_pTcpSockets;
+	/// @brief Handle a new datagram received signal.
+	///	@param pSocket The socket that received the datagram.
+	void handleDatagram(QUdpSocket* pSocket);
 
+	/// @brief Create a new network request.
+	///	@param address The address to send the request to.
+	///	@return The network reply pointer.
+	QNetworkReply* createNetworkRequest(const QString& address) const;
+
+private:
+	QMap<QString, QTcpSocket*> m_pTcpSockets;
+	QMap<QString, QTcpSocket*> m_pPeerTcpSockets;
+
+	std::unique_ptr<QNetworkAccessManager> m_pNetworkAccessManager;
 	std::unique_ptr<QTcpServer> m_pTcpServer;
 	std::unique_ptr<QUdpSocket> m_pUdpSocket;
 };

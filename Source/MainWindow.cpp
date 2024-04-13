@@ -40,8 +40,22 @@ MainWindow::MainWindow(QWidget* parent)
 	const auto pDataLink = m_pNetworkManager->getDataLink();
 	connect(dynamic_cast<DesktopDataLink*>(pDataLink), &DesktopDataLink::pingReceived, this, [this](DesktopDataLink::ClientType type, const QString& identifier)
 		{
-			if (m_ui->onlineList->findItems(identifier, Qt::MatchCaseSensitive).isEmpty())
-				m_ui->onlineList->addItem(identifier);
+			QString typeString;
+			switch (type) {
+			case DesktopDataLink::ClientType::Desktop:
+				typeString = "Desktop";
+				break;
+			case DesktopDataLink::ClientType::Mobile:
+				typeString = "Mobile";
+				break;
+			case DesktopDataLink::ClientType::Embedded:
+				typeString = "Embedded";
+				break;
+			}
+
+			const auto uiIdentifier = QString("%1 (%2)").arg(identifier, typeString);
+			if (m_ui->onlineList->findItems(uiIdentifier, Qt::MatchCaseSensitive).isEmpty())
+				m_ui->onlineList->addItem(uiIdentifier);
 		});
 
 	// Setup UI connections.

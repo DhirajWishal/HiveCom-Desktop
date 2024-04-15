@@ -1,7 +1,6 @@
 #include "DesktopDataLink.hpp"
 
 #include <QNetworkReply>
-#include <QNetworkInterface>
 #include <QNetworkDatagram>
 #include <QDebug>
 
@@ -14,36 +13,6 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 	, m_pTcpServer(std::make_unique<QTcpServer>(this))
 	, m_pUdpSocket(std::make_unique<QUdpSocket>(this))
 {
-	// Iterate over all the network interfaces and bind the UDP socket to all the broadcast addresses.
-	for (const auto& netInterfaces : QNetworkInterface::allInterfaces())
-	{
-		if (netInterfaces.flags() & (QNetworkInterface::CanBroadcast | QNetworkInterface::IsRunning))
-		{
-			for (const auto& address : netInterfaces.addressEntries())
-			{
-				const auto broadcast = address.broadcast();
-				if (broadcast.isNull())
-					continue;
-
-				const auto binder = [this](const QHostAddress& address)
-					{
-						QUdpSocket* pSocket = new QUdpSocket(this);
-						if (pSocket->bind(address, BroadcastPort, QAbstractSocket::ReuseAddressHint))
-						{
-							connect(pSocket, &QUdpSocket::readyRead, this, &DesktopDataLink::onUdpReadyRead);
-						}
-						else
-						{
-							qDebug() << "Failed to bind to the address" << address << pSocket->errorString();
-							pSocket->deleteLater();
-						}
-					};
-
-				binder(broadcast);
-			}
-		}
-	}
-
 	// // Setup the UDP socket.
 	if (m_pUdpSocket->bind(QHostAddress::AnyIPv4, BroadcastPort, QAbstractSocket::DontShareAddress | QAbstractSocket::ReuseAddressHint))
 	{
@@ -89,22 +58,24 @@ void DesktopDataLink::route(std::string_view receiver, const HiveCom::Bytes& mes
 {
 }
 
-void DesktopDataLink::onTcpConnected(QString identifier)
+void DesktopDataLink::onTcpConnected(const QString& identifier)
 {
 	// Upon connection, send the discovery packet.
 	const auto content = createDiscoveryPacket(identifier.toStdString());
 	m_pTcpSockets[identifier]->write(content.data());
 }
 
-void DesktopDataLink::onTcpDisconnected(QString identifier)
+void DesktopDataLink::onTcpDisconnected(const QString& identifier)
 {
 	qDebug() << "TCP disconnected!" << identifier;
 
 	m_pTcpSockets[identifier]->deleteLater();
 	m_pTcpSockets.remove(identifier);
+
+	emit disconnected(identifier);
 }
 
-void DesktopDataLink::onTcpReadyRead(QString identifier)
+void DesktopDataLink::onTcpReadyRead(const QString& identifier)
 {
 	qDebug() << "Ready read!" << identifier;
 }
@@ -212,10 +183,11 @@ void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
 	}
 }
 
-QNetworkReply* DesktopDataLink::createNetworkRequest(const QString& address) const
+QNetworkReply* DesktopDataLink::createNetworkRequest(const QString& address, QString path /*= "/"*/) const
 {
 	auto url = QUrl("http://" + address);
 	url.setPort(MessagePort);
+	url.setPath(path);
 
 	return m_pNetworkAccessManager->get(QNetworkRequest(url));
 }

@@ -37,8 +37,8 @@ MainWindow::MainWindow(QWidget* parent)
 	m_pNetworkManager = std::make_unique<HiveCom::NetworkManager>(std::make_unique<DesktopDataLink>(m_username.toStdString(), certificate, kemKey));
 
 	// Set up the required connections.
-	const auto pDataLink = m_pNetworkManager->getDataLink();
-	connect(dynamic_cast<DesktopDataLink*>(pDataLink), &DesktopDataLink::pingReceived, this, [this](DesktopDataLink::ClientType type, const QString& identifier)
+	const auto pDataLink = dynamic_cast<DesktopDataLink*>(m_pNetworkManager->getDataLink());
+	connect(pDataLink, &DesktopDataLink::pingReceived, this, [this](DesktopDataLink::ClientType type, const QString& identifier)
 		{
 			QString typeString;
 			switch (type) {
@@ -56,6 +56,19 @@ MainWindow::MainWindow(QWidget* parent)
 			const auto uiIdentifier = QString("%1 (%2)").arg(identifier, typeString);
 			if (m_ui->onlineList->findItems(uiIdentifier, Qt::MatchCaseSensitive).isEmpty())
 				m_ui->onlineList->addItem(uiIdentifier);
+		});
+
+	connect(pDataLink, &DesktopDataLink::disconnected, this, [this](const QString& identifier)
+		{
+			for(int i = 0; i < m_ui->onlineList->count(); i++)
+			{
+				const auto item = m_ui->onlineList->item(i);
+				if(item->text().startsWith(identifier))
+				{
+					delete m_ui->onlineList->takeItem(i);
+					return;
+				}
+			}
 		});
 
 	// Setup UI connections.

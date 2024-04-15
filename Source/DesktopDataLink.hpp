@@ -44,6 +44,10 @@ signals:
 	///	@param identifier The client's identifier.
 	void pingReceived(ClientType type, QString identifier);
 
+	/// @brief This signal is emitted if a connection has been disconnected.
+	///	@param identifier The peer identifier.
+	void disconnected(QString identifier);
+
 protected:
 	/// @brief Send a message through the networking protocol.
 	///	@param receiver The receiver identifier.
@@ -58,15 +62,15 @@ protected:
 private slots:
 	/// @brief This slot is called when the TCP socket is connected.
 	///	@param identifier The socket identifier.
-	void onTcpConnected(QString identifier);
+	void onTcpConnected(const QString& identifier);
 
 	/// @brief This slot is called when the TCP socket is disconnected.
 	///	@param identifier The socket identifier.
-	void onTcpDisconnected(QString identifier);
+	void onTcpDisconnected(const QString& identifier);
 
 	/// @brief This slot is called when the TCP socket is ready to read.
 	///	@param identifier The socket identifier.
-	void onTcpReadyRead(QString identifier);
+	void onTcpReadyRead(const QString& identifier);
 
 	/// @brief This slot is called when the peer TCP socket is ready to read.
 	void onTcpPeerReadyRead();
@@ -90,8 +94,9 @@ private:
 
 	/// @brief Create a new network request.
 	///	@param address The address to send the request to.
+	///	@param path The path of the URL. Default is "/".
 	///	@return The network reply pointer.
-	QNetworkReply* createNetworkRequest(const QString& address) const;
+	QNetworkReply* createNetworkRequest(const QString& address, QString path = "/") const;
 
 private:
 	QMap<QString, QTcpSocket*> m_pTcpSockets;

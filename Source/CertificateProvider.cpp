@@ -1,7 +1,7 @@
 #include "CertificateProvider.hpp"
 
-#include <HiveCom/Kyber768.hpp>
-#include <HiveCom/CertificateAuthority.hpp>
+#include <Core/Kyber768.hpp>
+#include <CertificateAuthority.hpp>
 
 CertificateProvider::CertificateProvider()
 {

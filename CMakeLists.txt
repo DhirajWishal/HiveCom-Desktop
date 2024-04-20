@@ -24,7 +24,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Network HttpServer)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Network HttpServer)
 
 # Set the HiveCom include directory.
-set(HIVECOM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/HiveCom/Include)
+set(HIVECOM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/HiveCom/Source)
 
 # Add the subdirectories.
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Source)

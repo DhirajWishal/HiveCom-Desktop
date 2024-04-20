@@ -3,10 +3,11 @@
 
 #include "DesktopDataLink.hpp"
 
-#include "HiveCom/CertificateAuthority.hpp"
-#include "HiveCom/Kyber768.hpp"
+#include "Core/Kyber768.hpp"
+#include "CertificateAuthority.hpp"
 
 #include <QDateTime>
+
 
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
@@ -60,10 +61,10 @@ MainWindow::MainWindow(QWidget* parent)
 
 	connect(pDataLink, &DesktopDataLink::disconnected, this, [this](const QString& identifier)
 		{
-			for(int i = 0; i < m_ui->onlineList->count(); i++)
+			for (int i = 0; i < m_ui->onlineList->count(); i++)
 			{
 				const auto item = m_ui->onlineList->item(i);
-				if(item->text().startsWith(identifier))
+				if (item->text().startsWith(identifier))
 				{
 					delete m_ui->onlineList->takeItem(i);
 					return;

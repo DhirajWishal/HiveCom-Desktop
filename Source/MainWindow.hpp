@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "HiveCom/NetworkManager.hpp"
+#include "NetworkManager.hpp"
 
 #include <QMainWindow>
 

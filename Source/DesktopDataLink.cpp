@@ -4,7 +4,7 @@
 #include <QNetworkDatagram>
 #include <QDebug>
 
-#include "HiveCom/CertificateAuthority.hpp"
+#include "CertificateAuthority.hpp"
 
 constexpr quint16 BroadcastPort = 1234;
 constexpr quint16 MessagePort = 1235;
@@ -28,9 +28,9 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 
 	// Setup the HTTP server.
 	m_pHttpServer->route("/", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
-	m_pHttpServer->route("/discovery", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
-	m_pHttpServer->route("/authorization", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
-	m_pHttpServer->route("/message", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("discovery", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("authorization", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("message", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
 
 	if (!m_pHttpServer->listen(QHostAddress::Any, MessagePort))
 	{
@@ -64,6 +64,10 @@ void DesktopDataLink::route(std::string_view receiver, const HiveCom::Bytes& mes
 {
 	// TODO: Implement a routing protocol.
 	send(receiver, message);
+}
+
+void DesktopDataLink::blacklistConnection(const std::string& identifier)
+{
 }
 
 void DesktopDataLink::onTcpConnected(const QString& identifier)

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <HiveCom/Kyber768Key.hpp>
-#include <HiveCom/Certificate.hpp>
+#include <Core/Kyber768Key.hpp>
+#include <Core/Certificate.hpp>
 
 /// @brief Certificate provider class.
 ///	This will generate a new certificate when needed along with it's public and private key pair.

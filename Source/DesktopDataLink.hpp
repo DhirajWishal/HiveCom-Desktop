@@ -1,6 +1,6 @@
 #pragma once
 
-#include <HiveCom/DataLink.hpp>
+#include <DataLink.hpp>
 
 #include <QNetworkAccessManager>
 #include <QtHttpServer/QHttpServer>
@@ -58,6 +58,11 @@ protected:
 	///	@param receiver The receiver node.
 	/// @param message The message to send.
 	void route(std::string_view receiver, const HiveCom::Bytes& message) override;
+
+	/// @brief This function is called if a certificate is invalid and if a connection should be blacklisted.
+	/// @note This function is called in a thread-safe manner.
+	/// @param identifier The identifier to blacklist.
+	void blacklistConnection(const std::string& identifier) override;
 
 private slots:
 	/// @brief This slot is called when the TCP socket is connected.

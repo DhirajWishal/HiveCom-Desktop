@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>SignKeys/private.DesktopApp-Sign.bin</file>
+        <file>SignKeys/public.DesktopApp-Sign.bin</file>
+    </qresource>
+</RCC>

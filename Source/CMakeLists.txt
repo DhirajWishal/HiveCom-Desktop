@@ -19,6 +19,9 @@ set(
 	"UI/MainWindow.ui"
 
     "Resources/Resource.qrc"
+
+    "Resources/SignKeys/public.DesktopApp-Sign.bin"
+    "Resources/SignKeys/private.DesktopApp-Sign.bin"
 )
 
 # Add the source group.

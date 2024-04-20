@@ -18,7 +18,11 @@ CertificateProvider::CertificateProvider()
 		if (content.size() == HiveCom::Dilithium3Key::PublicKeySize)
 			std::copy(content.begin(), content.end(), publicKey.data());
 		else
-			qWarning() << "Failed to load the public key file!";
+			qWarning() << "Invalid public key size or the content has been corrupted!";
+	}
+	else
+	{
+		qWarning() << "Failed to load the public key file!";
 	}
 
 	// Load the private key.
@@ -31,7 +35,11 @@ CertificateProvider::CertificateProvider()
 		if (content.size() == HiveCom::Dilithium3Key::PrivateKeySize)
 			std::copy(content.begin(), content.end(), privateKey.data());
 		else
-			qWarning() << "Failed to load the public key file!";
+			qWarning() << "Invalid private key size or the content has been corrupted!";
+	}
+	else
+	{
+		qWarning() << "Failed to load the private key file!";
 	}
 
 	// Setup the root key and add the public key as trusted.

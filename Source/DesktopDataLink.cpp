@@ -4,13 +4,15 @@
 #include <QNetworkDatagram>
 #include <QDebug>
 
+#include "HiveCom/CertificateAuthority.hpp"
+
 constexpr quint16 BroadcastPort = 1234;
 constexpr quint16 MessagePort = 1235;
 
 DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::Certificate& certificate, const HiveCom::Kyber768Key& keyPair)
 	: HiveCom::DataLink(identifier, certificate, keyPair)
 	, m_pNetworkAccessManager(std::make_unique<QNetworkAccessManager>(this))
-	, m_pTcpServer(std::make_unique<QTcpServer>(this))
+	, m_pHttpServer(std::make_unique<QHttpServer>(this))
 	, m_pUdpSocket(std::make_unique<QUdpSocket>(this))
 {
 	// // Setup the UDP socket.
@@ -24,14 +26,15 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 		m_pUdpSocket.reset();
 	}
 
-	// Setup the TCP server.
-	connect(m_pTcpServer.get(), &QTcpServer::newConnection, this, &DesktopDataLink::onNewConnectionAvailable);
+	// Setup the HTTP server.
+	m_pHttpServer->route("/", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("/discovery", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("/authorization", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("/message", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
 
-	if (m_pTcpServer->listen(QHostAddress::Any, MessagePort))
+	if (!m_pHttpServer->listen(QHostAddress::Any, MessagePort))
 	{
-		const auto port = m_pTcpServer->serverPort();
-		const auto addr = m_pTcpServer->serverAddress().toString();
-		qDebug() << "TCP Server port:" << port << "Address:" << addr;
+		qDebug() << "Failed to create the HTTP server!";
 	}
 }
 
@@ -40,7 +43,7 @@ void DesktopDataLink::sendDiscovery()
 	QUdpSocket* pSocket = new QUdpSocket(this);
 	connect(pSocket, &QUdpSocket::connected, this, [this, pSocket]
 		{
-			const auto message = ("HiveCom-Desktop; " + QString(m_identifier.c_str())).toUtf8();
+			const auto message = ("HiveCom-Desktop; " + QString::fromStdString(m_identifier).toUtf8());
 			if (pSocket->writeDatagram(message, QHostAddress::Broadcast, BroadcastPort) != message.size())
 				qDebug() << "Failed to write the data!";
 
@@ -52,10 +55,15 @@ void DesktopDataLink::sendDiscovery()
 
 void DesktopDataLink::send(std::string_view receiver, const HiveCom::Bytes& message)
 {
+	const auto address = m_identifierHostAddressMap[receiver.data()];
+	const auto pReply = createNetworkRequest(address.toString(), "/", QByteArray::fromRawData(reinterpret_cast<const char*>(message.data()), message.size()));
+	// TODO: Handle reply stuff.
 }
 
 void DesktopDataLink::route(std::string_view receiver, const HiveCom::Bytes& message)
 {
+	// TODO: Implement a routing protocol.
+	send(receiver, message);
 }
 
 void DesktopDataLink::onTcpConnected(const QString& identifier)
@@ -106,14 +114,44 @@ void DesktopDataLink::onUdpReadyRead()
 
 void DesktopDataLink::onNewConnectionAvailable()
 {
-	const auto pSocket = m_pTcpServer->nextPendingConnection();
+	// const auto pSocket = m_pTcpServer->nextPendingConnection();
+	//
+	// // Skip if we received a message from the same client.
+	// if (pSocket->peerAddress() == pSocket->localAddress())
+	// 	return;
+	//
+	// // Setup the required connections.
+	// connect(pSocket, &QTcpSocket::readyRead, this, &DesktopDataLink::onTcpPeerReadyRead);
+}
 
-	// Skip if we received a message from the same client.
-	if (pSocket->peerAddress() == pSocket->localAddress())
-		return;
+const char* DesktopDataLink::onMessageReceived(const QHttpServerRequest& request)
+{
+	const auto path = request.url().path();
 
-	// Setup the required connections.
-	connect(pSocket, &QTcpSocket::readyRead, this, &DesktopDataLink::onTcpPeerReadyRead);
+	// If the path is '/', it's a response for the discovery packet.
+	if (path == "/")
+	{
+		sendNetworkRequest(request.remoteAddress().toString(), "/discovery", QByteArray::fromStdString(createDiscoveryPacket(request.body().toStdString())));
+	}
+	// If the path is '/discovery', it's a discovery packet.
+	else if (path == "/discovery")
+	{
+		const auto rawCertificate = request.body();
+		const auto certificate = HiveCom::Certificate(rawCertificate.toStdString());
+
+		// If were the same identifier, or it has already been processed, skip.
+		if (certificate.getIdentifier() == m_identifier)
+			return "Not Ok";
+
+		onPacketReceived(certificate.getIdentifier().data(), HiveCom::ToBytes(rawCertificate.toStdString()));
+		m_identifierHostAddressMap[certificate.getIdentifier().data()] = request.remoteAddress();
+
+		// Emit the signal.
+		emit pingReceived(ClientType::Desktop, QString::fromStdString(certificate.getIdentifier().data()));
+	}
+
+	qDebug() << request;
+	return "Ok";
 }
 
 void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
@@ -125,12 +163,6 @@ void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
 	// If we received data with two splits, that means we're probably dealing with a ping packet.
 	if (splits.size() == 2)
 	{
-		const auto& identifier = splits[1];
-
-		// If were the same identifier, or it has already been processed, skip.
-		if (identifier == QString::fromStdString(m_identifier) || m_pTcpSockets.contains(identifier))
-			return;
-
 		// Extract the client type.
 		ClientType type;
 		const auto& clientType = splits[0];
@@ -153,29 +185,7 @@ void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
 			return;
 		}
 
-		// Emit the signal.
-		emit pingReceived(type, identifier);
-
-		// Set up a new connection.
-		const auto pReply = createNetworkRequest(datagram.senderAddress().toString());
-		connect(pReply, &QNetworkReply::finished, this, [this, pReply, identifier, datagram]
-			{
-				if (pReply->error() == QNetworkReply::NoError)
-				{
-					const auto pTcpSocket = m_pTcpSockets.insert(identifier, new QTcpSocket(this)).value();
-					connect(pTcpSocket, &QTcpSocket::connected, this, [this, identifier] { onTcpConnected(identifier); });
-					connect(pTcpSocket, &QTcpSocket::disconnected, this, [this, identifier] { onTcpDisconnected(identifier); });
-					connect(pTcpSocket, &QTcpSocket::readyRead, this, [this, identifier] { onTcpReadyRead(identifier); });
-
-					pTcpSocket->connectToHost(datagram.senderAddress(), MessagePort);
-				}
-				else
-				{
-					qDebug() << "Error occurred:" << pReply->errorString();
-				}
-
-				pReply->deleteLater();
-			});
+		sendNetworkRequest(datagram.senderAddress().toString(), "/", QByteArray::fromStdString(m_identifier));
 	}
 	else
 	{
@@ -183,11 +193,20 @@ void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
 	}
 }
 
-QNetworkReply* DesktopDataLink::createNetworkRequest(const QString& address, QString path /*= "/"*/) const
+QNetworkReply* DesktopDataLink::createNetworkRequest(const QString& address, const QString& path /*= "/"*/, const QByteArray& content /*= ""*/) const
 {
 	auto url = QUrl("http://" + address);
 	url.setPort(MessagePort);
 	url.setPath(path);
 
-	return m_pNetworkAccessManager->get(QNetworkRequest(url));
+	if (content.isEmpty())
+		return m_pNetworkAccessManager->get(QNetworkRequest(url));
+
+	return m_pNetworkAccessManager->post(QNetworkRequest(url), content);
+}
+
+void DesktopDataLink::sendNetworkRequest(const QString& address, const QString& path, const QByteArray& content) const
+{
+	const auto pReply = createNetworkRequest(address, path, content);
+	connect(pReply, &QNetworkReply::finished, this, [pReply] { pReply->deleteLater(); });
 }

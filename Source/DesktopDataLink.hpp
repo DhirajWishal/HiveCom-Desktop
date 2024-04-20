@@ -3,7 +3,7 @@
 #include <HiveCom/DataLink.hpp>
 
 #include <QNetworkAccessManager>
-#include <QTcpServer>
+#include <QtHttpServer/QHttpServer>
 #include <QUdpSocket>
 
 /// @brief Desktop data link class.
@@ -88,6 +88,11 @@ private slots:
 	void onNewConnectionAvailable();
 
 private:
+	/// @brief This function is called when the HTTP server receives a message.
+	///	@param request The HTTP request.
+	///	@return The response content.
+	const char* onMessageReceived(const QHttpServerRequest& request);
+
 	/// @brief Handle a new datagram received signal.
 	///	@param pSocket The socket that received the datagram.
 	void handleDatagram(QUdpSocket* pSocket);
@@ -95,14 +100,24 @@ private:
 	/// @brief Create a new network request.
 	///	@param address The address to send the request to.
 	///	@param path The path of the URL. Default is "/".
+	///	@param content The content to be posted to the server. If this field is empty, it'll send a GET request. Default is "".
 	///	@return The network reply pointer.
-	QNetworkReply* createNetworkRequest(const QString& address, QString path = "/") const;
+	QNetworkReply* createNetworkRequest(const QString& address, const QString& path = "/", const QByteArray& content = "") const;
+
+	/// @brief Send a new network request.
+	///	The reply is discarded regardless of send-status.
+	///	@param address The address to send the request to.
+	///	@param path The path of the URL. Default is "/".
+	///	@param content The content to be posted to the server. If this field is empty, it'll send a GET request. Default is "".
+	void sendNetworkRequest(const QString& address, const QString& path = "/", const QByteArray& content = "") const;
 
 private:
 	QMap<QString, QTcpSocket*> m_pTcpSockets;
 	QMap<QString, QTcpSocket*> m_pPeerTcpSockets;
+	QMap<std::string, QHostAddress> m_identifierHostAddressMap;
 
 	std::unique_ptr<QNetworkAccessManager> m_pNetworkAccessManager;
-	std::unique_ptr<QTcpServer> m_pTcpServer;
+	std::unique_ptr<QHttpServer> m_pHttpServer;
+
 	std::unique_ptr<QUdpSocket> m_pUdpSocket;
 };

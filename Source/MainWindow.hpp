@@ -13,6 +13,8 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+class QListWidgetItem;
+
 /// @brief Main window class.
 ///	This contains the main UI of the application.
 class MainWindow : public QMainWindow
@@ -27,7 +29,18 @@ public:
 	/// @brief Destructor.
 	~MainWindow();
 
+private slots:
+	/// @brief This slot is called when the user clicks on an online user.
+	///	@param pItem The item pointer.
+	void onUserSelected(const QListWidgetItem* pItem);
+
+	/// @brief This slot is called when the user clicks on the send button.
+	void onSendClicked();
+
 private:
+	/// @brief Setup the reflection network managers.
+	void setupReflectionNetworkManagers();
+
 	/// @brief Create a new reflection network manager.
 	///	@param identifier The network manager identifier.
 	///	@return The network manager pointer.
@@ -35,6 +48,8 @@ private:
 
 private:
 	QString m_username;
+	QString m_selectedUser;
+
 	std::vector<std::unique_ptr<HiveCom::NetworkManager>> m_pNetworkManagers;
 	QHash<QString, qsizetype> m_usernameIndexMap;
 

@@ -20,13 +20,7 @@ void ReflectionDataLink::setPeers(QStringList&& peers)
 void ReflectionDataLink::onTransmissionReceived(const std::string& identifier, const HiveCom::Bytes& content)
 {
 	if (m_identifier == identifier)
-	{
-		// Handle the message.
-	}
-	else
-	{
-		route(identifier, content);
-	}
+		onPacketReceived(qobject_cast<ReflectionDataLink*>(sender())->m_identifier, content);
 }
 
 void ReflectionDataLink::send(std::string_view receiver, const HiveCom::Bytes& message)
@@ -38,7 +32,10 @@ void ReflectionDataLink::route(std::string_view receiver, const HiveCom::Bytes& 
 {
 	// If the peer is in our list, send it directly.
 	if (m_peers.contains(receiver.data()))
+	{
 		send(receiver, message);
+		return;
+	}
 
 	// If the peer is not within our list, then send the message randomly.
 	const auto index = m_randomGenerator.bounded(m_peers.size());

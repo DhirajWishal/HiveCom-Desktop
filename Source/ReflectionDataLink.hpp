@@ -29,6 +29,10 @@ public:
 	///	@param peers The peers the node can directly communicate with.
 	void setPeers(QStringList&& peers);
 
+	/// @brief Get the peers.
+	///	@return The peers list.
+	[[nodiscard]] const QStringList& getPeers() const { return m_peers; }
+
 signals:
 	/// @brief This signal is emitted when the data link is required to send a data packet
 	///	to a recipient.

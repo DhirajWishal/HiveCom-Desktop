@@ -15,7 +15,10 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 	, m_pHttpServer(std::make_unique<QHttpServer>(this))
 	, m_pUdpSocket(std::make_unique<QUdpSocket>(this))
 {
-	// // Setup the UDP socket.
+	// Set the on authentication callback.
+	setOnAuthenticatedCallback([this](const std::string& identifier) {emit pingReceived(ClientType::Desktop, QString::fromStdString(identifier)); });
+
+	// Setup the UDP socket.
 	if (m_pUdpSocket->bind(QHostAddress::AnyIPv4, BroadcastPort, QAbstractSocket::DontShareAddress | QAbstractSocket::ReuseAddressHint))
 	{
 		connect(m_pUdpSocket.get(), &QUdpSocket::readyRead, this, &DesktopDataLink::onUdpReadyRead);
@@ -27,10 +30,9 @@ DesktopDataLink::DesktopDataLink(const std::string& identifier, const HiveCom::C
 	}
 
 	// Setup the HTTP server.
-	m_pHttpServer->route("/", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
-	m_pHttpServer->route("discovery", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
-	m_pHttpServer->route("authorization", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
-	m_pHttpServer->route("message", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
+	m_pHttpServer->route("/ping", [this](const QHttpServerRequest& request) {return onPingReceived(request); });
+	m_pHttpServer->route("/discovery", [this](const QHttpServerRequest& request) {return onDiscoveryReceived(request); });
+	m_pHttpServer->route("/message", [this](const QHttpServerRequest& request) {return onMessageReceived(request); });
 
 	if (!m_pHttpServer->listen(QHostAddress::Any, MessagePort))
 	{
@@ -55,8 +57,9 @@ void DesktopDataLink::sendDiscovery()
 
 void DesktopDataLink::send(std::string_view receiver, const HiveCom::Bytes& message)
 {
-	const auto address = m_identifierHostAddressMap[receiver.data()];
-	const auto pReply = createNetworkRequest(address.toString(), "/", QByteArray::fromRawData(reinterpret_cast<const char*>(message.data()), message.size()));
+	if (m_identifierHostAddressMap.contains(receiver.data()))
+		sendNetworkRequest(HostAddressToIP(m_identifierHostAddressMap[receiver.data()]), "/message", QByteArray::fromRawData(reinterpret_cast<const char*>(message.data()), message.size()));
+
 	// TODO: Handle reply stuff.
 }
 
@@ -70,95 +73,46 @@ void DesktopDataLink::blacklistConnection(const std::string& identifier)
 {
 }
 
-void DesktopDataLink::onTcpConnected(const QString& identifier)
-{
-	// Upon connection, send the discovery packet.
-	const auto content = createDiscoveryPacket(identifier.toStdString());
-	m_pTcpSockets[identifier]->write(content.data());
-}
-
-void DesktopDataLink::onTcpDisconnected(const QString& identifier)
-{
-	qDebug() << "TCP disconnected!" << identifier;
-
-	m_pTcpSockets[identifier]->deleteLater();
-	m_pTcpSockets.remove(identifier);
-
-	emit disconnected(identifier);
-}
-
-void DesktopDataLink::onTcpReadyRead(const QString& identifier)
-{
-	qDebug() << "Ready read!" << identifier;
-}
-
-void DesktopDataLink::onTcpPeerReadyRead()
-{
-	const auto pSender = qobject_cast<QTcpSocket*>(sender());
-	const auto data = pSender->readAll();
-	qDebug() << "Peer ready read!" << data;
-}
-
-void DesktopDataLink::onUdpConnected()
-{
-	qDebug() << "Testing";
-}
-
-void DesktopDataLink::onUdpDisconnected()
-{
-	qDebug() << "Testing";
-}
-
-void DesktopDataLink::onUdpReadyRead()
+void DesktopDataLink::onUdpReadyRead() const
 {
 	const auto pSenderSocket = qobject_cast<QUdpSocket*>(sender());
 	while (pSenderSocket->hasPendingDatagrams())
 		handleDatagram(pSenderSocket);
 }
 
-void DesktopDataLink::onNewConnectionAvailable()
+const char* DesktopDataLink::onPingReceived(const QHttpServerRequest& request) const
 {
-	// const auto pSocket = m_pTcpServer->nextPendingConnection();
-	//
-	// // Skip if we received a message from the same client.
-	// if (pSocket->peerAddress() == pSocket->localAddress())
-	// 	return;
-	//
-	// // Setup the required connections.
-	// connect(pSocket, &QTcpSocket::readyRead, this, &DesktopDataLink::onTcpPeerReadyRead);
+	sendNetworkRequest(HostAddressToIP(request.remoteAddress()), "/discovery", QByteArray::fromStdString(createDiscoveryPacket(request.body().toStdString())));
+	return "OK";
+}
+
+const char* DesktopDataLink::onDiscoveryReceived(const QHttpServerRequest& request)
+{
+	const auto rawCertificate = request.body();
+	const auto certificate = HiveCom::Certificate(rawCertificate.toStdString());
+
+	// If were the same identifier, or it has already been processed, skip.
+	if (certificate.getIdentifier() == m_identifier)
+		return "Not Ok";
+
+	onPacketReceived(certificate.getIdentifier().data(), HiveCom::ToBytes(rawCertificate.toStdString()));
+	m_identifierHostAddressMap[certificate.getIdentifier().data()] = request.remoteAddress();
+
+	// Emit the signal.
+	emit pingReceived(ClientType::Desktop, QString::fromStdString(certificate.getIdentifier().data()));
+	return "OK";
 }
 
 const char* DesktopDataLink::onMessageReceived(const QHttpServerRequest& request)
 {
-	const auto path = request.url().path();
+	if (m_identifierHostAddressMap.values().contains(request.remoteAddress()))
+		return "BAD REQUEST";
 
-	// If the path is '/', it's a response for the discovery packet.
-	if (path == "/")
-	{
-		sendNetworkRequest(request.remoteAddress().toString(), "/discovery", QByteArray::fromStdString(createDiscoveryPacket(request.body().toStdString())));
-	}
-	// If the path is '/discovery', it's a discovery packet.
-	else if (path == "/discovery")
-	{
-		const auto rawCertificate = request.body();
-		const auto certificate = HiveCom::Certificate(rawCertificate.toStdString());
-
-		// If were the same identifier, or it has already been processed, skip.
-		if (certificate.getIdentifier() == m_identifier)
-			return "Not Ok";
-
-		onPacketReceived(certificate.getIdentifier().data(), HiveCom::ToBytes(rawCertificate.toStdString()));
-		m_identifierHostAddressMap[certificate.getIdentifier().data()] = request.remoteAddress();
-
-		// Emit the signal.
-		emit pingReceived(ClientType::Desktop, QString::fromStdString(certificate.getIdentifier().data()));
-	}
-
-	qDebug() << request;
+	onPacketReceived(m_identifierHostAddressMap.key(request.remoteAddress()), HiveCom::ToBytes(request.body().data()));
 	return "Ok";
 }
 
-void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
+void DesktopDataLink::handleDatagram(QUdpSocket* pSocket) const
 {
 	const auto datagram = pSocket->receiveDatagram();
 	const auto data = QString(datagram.data());
@@ -189,7 +143,7 @@ void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
 			return;
 		}
 
-		sendNetworkRequest(datagram.senderAddress().toString(), "/", QByteArray::fromStdString(m_identifier));
+		sendNetworkRequest(datagram.senderAddress().toString(), "/ping", QByteArray::fromStdString(m_identifier));
 	}
 	else
 	{
@@ -197,20 +151,34 @@ void DesktopDataLink::handleDatagram(QUdpSocket* pSocket)
 	}
 }
 
-QNetworkReply* DesktopDataLink::createNetworkRequest(const QString& address, const QString& path /*= "/"*/, const QByteArray& content /*= ""*/) const
+QNetworkReply* DesktopDataLink::createNetworkRequest(const QString& address, const QString& path /*= "/ping"*/, const QByteArray& content /*= ""*/) const
 {
 	auto url = QUrl("http://" + address);
 	url.setPort(MessagePort);
 	url.setPath(path);
+	qDebug() << url;
+
+	QNetworkRequest request(url);
 
 	if (content.isEmpty())
-		return m_pNetworkAccessManager->get(QNetworkRequest(url));
+		return m_pNetworkAccessManager->get(request);
 
-	return m_pNetworkAccessManager->post(QNetworkRequest(url), content);
+	request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "text/plain");
+	return m_pNetworkAccessManager->post(request, content);
 }
 
 void DesktopDataLink::sendNetworkRequest(const QString& address, const QString& path, const QByteArray& content) const
 {
 	const auto pReply = createNetworkRequest(address, path, content);
 	connect(pReply, &QNetworkReply::finished, this, [pReply] { pReply->deleteLater(); });
+}
+
+QString DesktopDataLink::HostAddressToIP(const QHostAddress& address)
+{
+	const auto addressString = address.toString();
+
+	if (addressString.contains("::"))
+		return addressString.split(':').last();
+
+	return addressString;
 }

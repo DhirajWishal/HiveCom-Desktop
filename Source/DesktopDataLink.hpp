@@ -65,34 +65,20 @@ protected:
 	void blacklistConnection(const std::string& identifier) override;
 
 private slots:
-	/// @brief This slot is called when the TCP socket is connected.
-	///	@param identifier The socket identifier.
-	void onTcpConnected(const QString& identifier);
-
-	/// @brief This slot is called when the TCP socket is disconnected.
-	///	@param identifier The socket identifier.
-	void onTcpDisconnected(const QString& identifier);
-
-	/// @brief This slot is called when the TCP socket is ready to read.
-	///	@param identifier The socket identifier.
-	void onTcpReadyRead(const QString& identifier);
-
-	/// @brief This slot is called when the peer TCP socket is ready to read.
-	void onTcpPeerReadyRead();
-
-	/// @brief This slot is called when the UDP socket is connected.
-	void onUdpConnected();
-
-	/// @brief This slot is called when the UDP socket is disconnected.
-	void onUdpDisconnected();
-
 	/// @brief This slot is called when the UDP socket is ready to read.
-	void onUdpReadyRead();
-
-	/// @brief This slot is called when a new connection is available for the TCP server.
-	void onNewConnectionAvailable();
+	void onUdpReadyRead() const;
 
 private:
+	/// @brief This function is called when the HTTP server receives a ping.
+	///	@param request The HTTP request.
+	///	@return The response content.
+	const char* onPingReceived(const QHttpServerRequest& request) const;
+
+	/// @brief This function is called when the HTTP server receives a discovery.
+	///	@param request The HTTP request.
+	///	@return The response content.
+	const char* onDiscoveryReceived(const QHttpServerRequest& request);
+
 	/// @brief This function is called when the HTTP server receives a message.
 	///	@param request The HTTP request.
 	///	@return The response content.
@@ -100,25 +86,28 @@ private:
 
 	/// @brief Handle a new datagram received signal.
 	///	@param pSocket The socket that received the datagram.
-	void handleDatagram(QUdpSocket* pSocket);
+	void handleDatagram(QUdpSocket* pSocket) const;
 
 	/// @brief Create a new network request.
 	///	@param address The address to send the request to.
-	///	@param path The path of the URL. Default is "/".
+	///	@param path The path of the URL. Default is "/ping".
 	///	@param content The content to be posted to the server. If this field is empty, it'll send a GET request. Default is "".
 	///	@return The network reply pointer.
-	QNetworkReply* createNetworkRequest(const QString& address, const QString& path = "/", const QByteArray& content = "") const;
+	QNetworkReply* createNetworkRequest(const QString& address, const QString& path = "/ping", const QByteArray& content = "") const;
 
 	/// @brief Send a new network request.
 	///	The reply is discarded regardless of send-status.
 	///	@param address The address to send the request to.
-	///	@param path The path of the URL. Default is "/".
+	///	@param path The path of the URL. Default is "/ping".
 	///	@param content The content to be posted to the server. If this field is empty, it'll send a GET request. Default is "".
-	void sendNetworkRequest(const QString& address, const QString& path = "/", const QByteArray& content = "") const;
+	void sendNetworkRequest(const QString& address, const QString& path = "/ping", const QByteArray& content = "") const;
+
+	/// @brief Convert a host address to IPv4.
+	///	@param address The host address to convert.
+	///	@return The IPv4 string.
+	static QString HostAddressToIP(const QHostAddress& address);
 
 private:
-	QMap<QString, QTcpSocket*> m_pTcpSockets;
-	QMap<QString, QTcpSocket*> m_pPeerTcpSockets;
 	QMap<std::string, QHostAddress> m_identifierHostAddressMap;
 
 	std::unique_ptr<QNetworkAccessManager> m_pNetworkAccessManager;

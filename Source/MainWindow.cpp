@@ -8,6 +8,7 @@
 #include <QDateTime>
 
 #define SETUP_USERNAME(identifier)	"User-" identifier
+#define REFLECTION_DATA_LINK_CAST(...)	dynamic_cast<ReflectionDataLink*>(__VA_ARGS__)
 
 namespace /* anonymous */
 {
@@ -56,7 +57,7 @@ MainWindow::MainWindow(QWidget* parent)
 	for (auto& [identifier, peers] : peerList)
 	{
 		m_pNetworkManagers.emplace_back(createReflectionNetworkManger(identifier.toStdString()));
-		const auto pDataLink = dynamic_cast<ReflectionDataLink*>(m_pNetworkManagers.back()->getDataLink());
+		const auto pDataLink = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers.back()->getDataLink());
 		pDataLink->setPeers(std::move(peers));
 
 		m_usernameIndexMap[identifier] = index++;
@@ -66,12 +67,12 @@ MainWindow::MainWindow(QWidget* parent)
 	for (const auto& identifier : m_usernameIndexMap.keys())
 	{
 		const auto currentIndex = m_usernameIndexMap[identifier];
-		const auto pDataLink = dynamic_cast<ReflectionDataLink*>(m_pNetworkManagers[currentIndex]->getDataLink());
+		const auto pDataLink = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[currentIndex]->getDataLink());
 		const auto peers = pDataLink->getPeers();
 
 		for (const auto& peer : peers)
 		{
-			const auto pPeer = dynamic_cast<ReflectionDataLink*>(m_pNetworkManagers[m_usernameIndexMap[peer]]->getDataLink());
+			const auto pPeer = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[m_usernameIndexMap[peer]]->getDataLink());
 			connect(pDataLink, &ReflectionDataLink::messageTransmission, pPeer, &ReflectionDataLink::onTransmissionReceived, Qt::QueuedConnection);
 			connect(pPeer, &ReflectionDataLink::messageTransmission, pDataLink, &ReflectionDataLink::onTransmissionReceived, Qt::QueuedConnection);
 		}
@@ -79,7 +80,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 	// Start all the threads.
 	for (const auto& pNetworkManger : m_pNetworkManagers)
-		dynamic_cast<ReflectionDataLink*>(pNetworkManger->getDataLink())->start();
+		REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink())->start();
 
 	// Setup UI connections.
 	connect(m_ui->startButton, &QPushButton::clicked, this, [this]
@@ -90,6 +91,10 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow()
 {
+	// Quit all the threads.
+	for (const auto& pNetworkManger : m_pNetworkManagers)
+		REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink())->quit();
+
 	delete m_ui;
 }
 

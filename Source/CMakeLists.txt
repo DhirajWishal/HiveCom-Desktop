@@ -16,9 +16,12 @@ set(
 	"MainWindow.cpp"
 	"MainWindow.hpp"
 
+    "ReflectionDataLink.hpp"
+    "ReflectionDataLink.cpp"
+
 	"UI/MainWindow.ui"
 
-    "Resources/Resource.qrc"
+    "Resources/Resources.qrc"
 
     "Resources/SignKeys/public.DesktopApp-Sign.bin"
     "Resources/SignKeys/private.DesktopApp-Sign.bin"

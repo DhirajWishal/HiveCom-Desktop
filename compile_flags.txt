@@ -1,5 +1,5 @@
 -std=c++17
 -I
--IE:/Applications/OpenSSL-Win64/include
+-I/opt/homebrew/include
 -I
 -I

@@ -41,11 +41,7 @@ MainWindow::MainWindow(QWidget* parent)
 	setupReflectionNetworkManagers();
 
 	// Setup UI connections.
-	connect(m_ui->startButton, &QPushButton::clicked, this, [this]
-		{
-			m_pNetworkManagers.front()->pingPeers();
-		});
-
+	connect(m_ui->startButton, &QPushButton::clicked, this, [this] {m_pNetworkManagers.front()->pingPeers(); });
 	connect(m_ui->onlineList, &QListWidget::itemClicked, this, &MainWindow::onUserSelected);
 	connect(m_ui->sendButton, &QPushButton::clicked, this, &MainWindow::onSendClicked);
 }
@@ -121,8 +117,7 @@ void MainWindow::setupReflectionNetworkManagers()
 
 		m_pNetworkManagers.back()->setOnMessageCallback([this, identifier](HiveCom::MessageFlag, const std::string& sender, const HiveCom::Bytes& bytes)
 			{
-				m_ui->messageView->addItem(QString("%1\n%2").arg(identifier, QString::fromStdString(HiveCom::ToString(bytes))));
-				// qDebug() << "Message: " << QString::fromStdString(HiveCom::ToString(bytes));
+				m_ui->messageView->addItem(QString("%1 (Reply)\n%2").arg(identifier, QString::fromStdString(HiveCom::ToString(bytes))));
 			});
 
 		m_usernameIndexMap[identifier] = index++;
@@ -136,11 +131,7 @@ void MainWindow::setupReflectionNetworkManagers()
 		const auto peers = pDataLink->getPeers();
 
 		for (const auto& peer : peers)
-		{
-			const auto pPeer = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[m_usernameIndexMap[peer]]->getDataLink());
-			connect(pDataLink, &ReflectionDataLink::messageTransmission, pPeer, &ReflectionDataLink::onTransmissionReceived, Qt::QueuedConnection);
-			connect(pPeer, &ReflectionDataLink::messageTransmission, pDataLink, &ReflectionDataLink::onTransmissionReceived, Qt::QueuedConnection);
-		}
+			connect(pDataLink, &ReflectionDataLink::messageTransmission, REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[m_usernameIndexMap[peer]]->getDataLink()), &ReflectionDataLink::onTransmissionReceived, Qt::QueuedConnection);
 	}
 
 	// Start all the threads.

@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include "NetworkManager.hpp"
 
@@ -55,4 +54,3 @@ private:
 
 	Ui::MainWindow* m_ui = nullptr;
 };
-#endif // MAINWINDOW_H

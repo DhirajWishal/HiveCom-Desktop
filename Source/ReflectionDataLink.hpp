@@ -38,7 +38,7 @@ signals:
 	///	to a recipient.
 	///	@param identifier The identifier of the peer.
 	///	@param content The content to transfer.
-	void messageTransmission(std::string identifier, HiveCom::Bytes content);
+	void messageTransmission(std::string identifier, const HiveCom::Bytes& content);
 
 public slots:
 	/// @brief This slot should be connected in order to communicate with other nodes.

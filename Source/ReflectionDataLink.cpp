@@ -9,7 +9,7 @@ ReflectionDataLink::ReflectionDataLink(const std::string& identifier, const Hive
 void ReflectionDataLink::sendDiscovery()
 {
 	for (const auto& peer : m_peers)
-		emit messageTransmission(peer.toStdString(), HiveCom::ToBytes(createDiscoveryPacket(peer.toStdString())));
+		send(peer.toStdString(), HiveCom::ToBytes(createDiscoveryPacket(peer.toStdString())));
 }
 
 void ReflectionDataLink::setPeers(QStringList&& peers)

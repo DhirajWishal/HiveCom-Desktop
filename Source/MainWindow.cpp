@@ -52,8 +52,8 @@ MainWindow::~MainWindow()
     for (const auto& pNetworkManger : m_pNetworkManagers)
     {
         const auto pDataLink = REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink());
-        pDataLink->wait();
         pDataLink->quit();
+        pDataLink->wait();
     }
 
 
@@ -100,12 +100,12 @@ void MainWindow::setupReflectionNetworkManagers()
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("C"), IdentifiersToUsernames("B")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("D"), IdentifiersToUsernames("AE")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("E"), IdentifiersToUsernames("DFP")));
-	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("F"), IdentifiersToUsernames("BFG")));
+	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("F"), IdentifiersToUsernames("BEG")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("G"), IdentifiersToUsernames("FHI")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("H"), IdentifiersToUsernames("GI")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("I"), IdentifiersToUsernames("GHJKL")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("J"), IdentifiersToUsernames("IK")));
-	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("K"), IdentifiersToUsernames("JLM")));
+	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("K"), IdentifiersToUsernames("IJLM")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("L"), IdentifiersToUsernames("IK")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("M"), IdentifiersToUsernames("K")));
 	peerList.emplace_back(qMakePair<QString, QStringList>(SETUP_USERNAME("N"), IdentifiersToUsernames("AO")));

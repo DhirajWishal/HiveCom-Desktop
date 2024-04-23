@@ -49,8 +49,13 @@ MainWindow::MainWindow(QWidget* parent)
 MainWindow::~MainWindow()
 {
 	// Quit all the threads.
-	for (const auto& pNetworkManger : m_pNetworkManagers)
-		REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink())->quit();
+    for (const auto& pNetworkManger : m_pNetworkManagers)
+    {
+        const auto pDataLink = REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink());
+        pDataLink->wait();
+        pDataLink->quit();
+    }
+
 
 	delete m_ui;
 }
@@ -115,7 +120,7 @@ void MainWindow::setupReflectionNetworkManagers()
 		const auto pDataLink = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers.back()->getDataLink());
 		pDataLink->setPeers(std::move(peers));
 
-		m_pNetworkManagers.back()->setOnMessageCallback([this, identifier](HiveCom::MessageFlag, const std::string& sender, const HiveCom::Bytes& bytes)
+        m_pNetworkManagers.back()->setOnMessageCallback([this, identifier = identifier](HiveCom::MessageFlag, const std::string& sender, const HiveCom::Bytes& bytes)
 			{
 				m_ui->messageView->addItem(QString("%1 (Reply)\n%2").arg(identifier, QString::fromStdString(HiveCom::ToString(bytes))));
 			});

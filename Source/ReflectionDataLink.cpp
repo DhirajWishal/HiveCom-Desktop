@@ -66,48 +66,50 @@ void ReflectionDataLink::logMessage(std::string_view receiver, const HiveCom::By
 	const auto splits = content.split('\n');
 
 	QStringList logMessage;
-	logMessage << "Message being sent from '" << m_identifier.data() << "' to '" << receiver.data() << "'\nMessage content:\n";
+	logMessage << "Message being sent from '" << m_identifier.data() << "' to '" << receiver.data()
+		<< "'\n\nVersion: " << splits[0] << "\n";
 
-	logMessage << "Version: " << splits[0] << "\n";
-	switch (static_cast<HiveCom::MessageFlag>(splits[1].toInt())) {
+	switch (static_cast<HiveCom::MessageFlag>(splits[1].toInt()))
+	{
 	case HiveCom::MessageFlag::Discovery:
 		logMessage << "Flag: Discovery\n";
-		logMessage << "Receiver: " << splits[2] << "\n";
-		logMessage << "Certificate: " << ProcessBytes(splits[3]) << "\n";
+		logMessage << "Intended receiver: " << splits[2] << "\n";
+		logMessage << "Certificate: " << ProcessBytes(splits[3]);
 		break;
 
 	case HiveCom::MessageFlag::Authorization:
 		logMessage << "Flag: Authorization\n";
-		logMessage << "Receiver: " << splits[2] << "\n";
+		logMessage << "Intended receiver: " << splits[2] << "\n";
 		logMessage << "Certificate: " << ProcessBytes(splits[3]) << "\n";
-		logMessage << "Ciphertext: " << ProcessBytes(splits[4]) << "\n";
+		logMessage << "Ciphertext: " << ProcessBytes(splits[4]);
 		break;
 
 	case HiveCom::MessageFlag::Message:
 		logMessage << "Flag: Message\n";
-		logMessage << "Receiver: " << splits[2] << "\n";
-		logMessage << "Sender: " << splits[3] << "\n";
-		logMessage << "Message: " << ProcessBytes(splits[4]) << "\n";
+		logMessage << "Intended receiver: " << splits[2] << "\n";
+		logMessage << "Author (sender): " << splits[3] << "\n";
+		logMessage << "Message: " << ProcessBytes(splits[4]);
 		break;
 
 	case HiveCom::MessageFlag::Control:
 		logMessage << "Flag: Control\n";
-		logMessage << "Receiver: " << splits[2] << "\n";
-		logMessage << "Sender: " << splits[3] << "\n";
-		logMessage << "Message: " << ProcessBytes(splits[4]) << "\n";
+		logMessage << "Intended receiver: " << splits[2] << "\n";
+		logMessage << "Author (sender): " << splits[3] << "\n";
+		logMessage << "Message: " << ProcessBytes(splits[4]);
 		break;
 
 	case HiveCom::MessageFlag::Route:
 		logMessage << "Flag: Route\n";
-		logMessage << "Receiver: " << splits[2] << "\n";
-		logMessage << "Sender: " << splits[3] << "\n";
-		logMessage << "Message: " << ProcessBytes(splits[4]) << "\n";
+		logMessage << "Intended receiver: " << splits[2] << "\n";
+		logMessage << "Author (sender): " << splits[3] << "\n";
+		logMessage << "Message: " << ProcessBytes(splits[4]);
 		break;
 
 	default:
-		logMessage << "Packet flag: N/A\n";
+		logMessage << "Packet flag: N/A";
 		break;
 	}
 
+	logMessage << "\n";
 	emit log(logMessage.join(""));
 }

@@ -93,7 +93,7 @@ void MainWindow::onEditFinished()
 
 void MainWindow::onLogRequested(const QString& content) const
 {
-	m_ui->logs->addItem(content);
+	m_ui->logs->addItem(QString("[%1]\n%2").arg(QDateTime::currentDateTime().toString(), content));
 }
 
 void MainWindow::setupReflectionNetworkManagers()
@@ -138,7 +138,7 @@ void MainWindow::setupReflectionNetworkManagers()
 	{
 		const auto currentIndex = m_usernameIndexMap[identifier];
 		const auto pDataLink = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[currentIndex]->getDataLink());
-		connect(pDataLink, &ReflectionDataLink::log, this, &MainWindow::onLogRequested);
+		connect(pDataLink, &ReflectionDataLink::log, this, &MainWindow::onLogRequested, Qt::QueuedConnection);
 
 		const auto peers = pDataLink->getPeers();
 		for (const auto& peer : peers)

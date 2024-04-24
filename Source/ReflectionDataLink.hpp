@@ -66,6 +66,13 @@ protected:
 	/// @note This function is called in a thread-safe manner.
 	/// @param identifier The identifier to blacklist.
 	void blacklistConnection(const std::string& identifier) override;
+    
+private:
+    /// @brief Log a message to the UI.
+    /// This will do some formatting when logging everything in.
+    /// @param receiver The receiver of the message.
+    /// @param message The message that's being transmitted.
+    void logMessage(std::string_view receiver, const HiveCom::Bytes& message);
 
 private:
 	QStringList m_peers;

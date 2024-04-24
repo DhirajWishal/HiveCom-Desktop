@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>HiveCom-Desktop</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -75,6 +75,13 @@
     <item row="0" column="2">
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Online Users</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QListWidget" name="onlineList">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -85,7 +92,25 @@
        </widget>
       </item>
       <item>
-       <widget class="QListWidget" name="logs"/>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Logs</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QListWidget" name="logs">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -97,7 +122,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>37</height>
     </rect>
    </property>
   </widget>

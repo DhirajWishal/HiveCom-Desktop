@@ -40,6 +40,10 @@ signals:
 	///	@param content The content to transfer.
 	void messageTransmission(std::string identifier, const HiveCom::Bytes& content);
 
+	/// @brief This signal is emitted when a new log should be inserted to the log.
+	///	@param content The content to be logged.
+	void log(QString content);
+
 public slots:
 	/// @brief This slot should be connected in order to communicate with other nodes.
 	///	This will handle the incoming message and routing is conducted accordingly.

@@ -33,8 +33,12 @@ private slots:
 	///	@param pItem The item pointer.
 	void onUserSelected(const QListWidgetItem* pItem);
 
-	/// @brief This slot is called when the user clicks on the send button.
-	void onSendClicked();
+	/// @brief This slot is called when the user clicks on the send button or once the text edit editing is finished.
+	void onEditFinished();
+
+	/// @brief This slot is called from data links when it requests to log something to the UI.
+	///	@param content The content to log.
+	void onLogRequested(const QString& content) const;
 
 private:
 	/// @brief Setup the reflection network managers.

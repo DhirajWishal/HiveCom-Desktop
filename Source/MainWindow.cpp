@@ -11,6 +11,7 @@
 #define SETUP_USERNAME(identifier)	"User-" identifier
 #define REFLECTION_DATA_LINK_CAST(...)	dynamic_cast<ReflectionDataLink*>(__VA_ARGS__)
 
+
 namespace /* anonymous */
 {
 	/// @brief Utility function to convert identifier string (each character is an identifier) to a string list.
@@ -26,7 +27,6 @@ namespace /* anonymous */
 	}
 }
 
-
 MainWindow::MainWindow(QWidget* parent)
 	: QMainWindow(parent)
 	, m_username(SETUP_USERNAME("A"))
@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget* parent)
 	m_ui->setupUi(this);
 
 	// Show the username.
-	m_ui->username->setText("Username: " + m_username);
+	m_ui->username->setText("Current username: " + m_username);
 
 	// Setup the reflection network managers.
 	setupReflectionNetworkManagers();
@@ -43,19 +43,19 @@ MainWindow::MainWindow(QWidget* parent)
 	// Setup UI connections.
 	connect(m_ui->startButton, &QPushButton::clicked, this, [this] {m_pNetworkManagers.front()->pingPeers(); });
 	connect(m_ui->onlineList, &QListWidget::itemClicked, this, &MainWindow::onUserSelected);
-	connect(m_ui->sendButton, &QPushButton::clicked, this, &MainWindow::onSendClicked);
+	connect(m_ui->sendButton, &QPushButton::clicked, this, &MainWindow::onEditFinished);
+	connect(m_ui->textInput, &QLineEdit::editingFinished, this, &MainWindow::onEditFinished);
 }
 
 MainWindow::~MainWindow()
 {
 	// Quit all the threads.
-    for (const auto& pNetworkManger : m_pNetworkManagers)
-    {
-        const auto pDataLink = REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink());
-        pDataLink->quit();
-        pDataLink->wait();
-    }
-
+	for (const auto& pNetworkManger : m_pNetworkManagers)
+	{
+		const auto pDataLink = REFLECTION_DATA_LINK_CAST(pNetworkManger->getDataLink());
+		pDataLink->quit();
+		pDataLink->wait();
+	}
 
 	delete m_ui;
 }
@@ -73,7 +73,7 @@ void MainWindow::onUserSelected(const QListWidgetItem* pItem)
 	m_ui->selectedUser->setText("Selected user: " + pItem->text());
 }
 
-void MainWindow::onSendClicked()
+void MainWindow::onEditFinished()
 {
 	// Skip if the text input is empty.
 	if (m_ui->textInput->text().isEmpty())
@@ -89,6 +89,11 @@ void MainWindow::onSendClicked()
 	m_pNetworkManagers.front()->sendMessage(m_selectedUser.toStdString(), HiveCom::ToBytes(m_ui->textInput->text().toStdString()));
 	m_ui->messageView->addItem(QString("%1\n%2").arg(m_username, m_ui->textInput->text()));
 	m_ui->textInput->clear();
+}
+
+void MainWindow::onLogRequested(const QString& content) const
+{
+	m_ui->logs->addItem(content);
 }
 
 void MainWindow::setupReflectionNetworkManagers()
@@ -120,9 +125,9 @@ void MainWindow::setupReflectionNetworkManagers()
 		const auto pDataLink = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers.back()->getDataLink());
 		pDataLink->setPeers(std::move(peers));
 
-        m_pNetworkManagers.back()->setOnMessageCallback([this, identifier = identifier](HiveCom::MessageFlag, const std::string& sender, const HiveCom::Bytes& bytes)
+		m_pNetworkManagers.back()->setOnMessageCallback([this, node = identifier](HiveCom::MessageFlag, const std::string& sender, const HiveCom::Bytes& bytes)
 			{
-				m_ui->messageView->addItem(QString("%1 (Reply)\n%2").arg(identifier, QString::fromStdString(HiveCom::ToString(bytes))));
+				m_ui->messageView->addItem(QString("%1 (Reply)\n%2").arg(node, QString::fromStdString(HiveCom::ToString(bytes))));
 			});
 
 		m_usernameIndexMap[identifier] = index++;
@@ -133,8 +138,9 @@ void MainWindow::setupReflectionNetworkManagers()
 	{
 		const auto currentIndex = m_usernameIndexMap[identifier];
 		const auto pDataLink = REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[currentIndex]->getDataLink());
-		const auto peers = pDataLink->getPeers();
+		connect(pDataLink, &ReflectionDataLink::log, this, &MainWindow::onLogRequested);
 
+		const auto peers = pDataLink->getPeers();
 		for (const auto& peer : peers)
 			connect(pDataLink, &ReflectionDataLink::messageTransmission, REFLECTION_DATA_LINK_CAST(m_pNetworkManagers[m_usernameIndexMap[peer]]->getDataLink()), &ReflectionDataLink::onTransmissionReceived, Qt::QueuedConnection);
 	}

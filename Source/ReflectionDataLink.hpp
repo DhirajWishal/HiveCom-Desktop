@@ -68,6 +68,12 @@ protected:
 	void blacklistConnection(const std::string& identifier) override;
     
 private:
+	/// @brief Process a bunch of bytes to be shown by the message logging system.
+	///	This will trim the number of bytes being shown to a specified size.
+	///	@param bytes The bytes to process.
+	///	@return The processed information.
+	static QString ProcessBytes(const QByteArray& bytes);
+
     /// @brief Log a message to the UI.
     /// This will do some formatting when logging everything in.
     /// @param receiver The receiver of the message.

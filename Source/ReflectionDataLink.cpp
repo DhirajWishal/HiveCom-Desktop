@@ -4,7 +4,8 @@ ReflectionDataLink::ReflectionDataLink(const std::string& identifier, const Hive
 	const HiveCom::Kyber768Key& keyPair)
 	: HiveCom::DataLink(identifier, certificate, keyPair)
 {
-	connect(this, &QThread::started, this, [this] {sendDiscovery(); });
+	// Remove this for performance issues.
+	// connect(this, &QThread::started, this, [this] {sendDiscovery(); });
 }
 
 void ReflectionDataLink::sendDiscovery()

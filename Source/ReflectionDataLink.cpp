@@ -27,8 +27,8 @@ void ReflectionDataLink::onTransmissionReceived(const std::string& identifier, c
 
 void ReflectionDataLink::send(std::string_view receiver, const HiveCom::Bytes& message)
 {
-	logMessage(receiver, message);
 	emit messageTransmission(receiver.data(), message);
+	logMessage(receiver, message);
 }
 
 void ReflectionDataLink::route(std::string_view receiver, const HiveCom::Bytes& message)
@@ -40,9 +40,31 @@ void ReflectionDataLink::route(std::string_view receiver, const HiveCom::Bytes& 
 		return;
 	}
 
+	// If we only have one peer, send it to it.
+	if (m_peers.size() == 1)
+	{
+		send(m_peers.first().toStdString(), message);
+		return;
+	}
+
+	// Try to find the previous sender.
+	const auto senderDataLink = qobject_cast<ReflectionDataLink*>(sender());
+	if (senderDataLink == nullptr)
+	{
+		send(m_peers[m_randomGenerator.bounded(m_peers.size())].toStdString(), message);
+		return;
+	}
+
+	// Find who sent the message to us so we can skip them.
+	const auto previousSender = senderDataLink->m_identifier;
+	std::string nextReceiver = previousSender;
+
 	// If the peer is not within our list, then send the message randomly.
-	const auto index = m_randomGenerator.bounded(m_peers.size());
-	send(m_peers[index].toStdString(), message);
+	while (previousSender == nextReceiver)
+		nextReceiver = m_peers[m_randomGenerator.bounded(m_peers.size())].toStdString();
+
+	// Send the message to the next receiver.
+	send(nextReceiver, message);
 }
 
 void ReflectionDataLink::blacklistConnection(const std::string& identifier)

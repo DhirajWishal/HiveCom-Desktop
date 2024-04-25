@@ -4,8 +4,7 @@ ReflectionDataLink::ReflectionDataLink(const std::string& identifier, const Hive
 	const HiveCom::Kyber768Key& keyPair)
 	: HiveCom::DataLink(identifier, certificate, keyPair)
 {
-	// Remove this for better performance.
-	// connect(this, &QThread::started, this, [this] {sendDiscovery(); });
+	connect(this, &QThread::started, this, [this] {sendDiscovery(); });
 }
 
 void ReflectionDataLink::sendDiscovery()
@@ -55,7 +54,7 @@ void ReflectionDataLink::route(std::string_view receiver, const HiveCom::Bytes& 
 		return;
 	}
 
-	// Find who sent the message to us so we can skip them.
+	// Find who sent the message to us, so we can skip them.
 	const auto previousSender = senderDataLink->m_identifier;
 	std::string nextReceiver = previousSender;
 
@@ -75,7 +74,6 @@ void ReflectionDataLink::blacklistConnection(const std::string& identifier)
 QString ReflectionDataLink::ProcessBytes(const QByteArray& bytes)
 {
 	constexpr auto MaxCharacterCount = 20;
-
 	if (bytes.size() > MaxCharacterCount)
 		return QString("%1 ... %2").arg(bytes.sliced(0, MaxCharacterCount), bytes.sliced(bytes.size() - MaxCharacterCount, MaxCharacterCount));
 
@@ -89,7 +87,7 @@ void ReflectionDataLink::logMessage(std::string_view receiver, const HiveCom::By
 
 	QStringList logMessage;
 	logMessage << "Message being sent from '" << m_identifier.data() << "' to '" << receiver.data()
-		<< "'\n\nVersion: " << splits[0] << "\n";
+		<< "'\nVersion: " << splits[0] << "\n";
 
 	switch (static_cast<HiveCom::MessageFlag>(splits[1].toInt()))
 	{
